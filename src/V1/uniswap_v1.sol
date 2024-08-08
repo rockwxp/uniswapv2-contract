@@ -20,7 +20,7 @@ interface IExchange {
     function ethToTokenTransfer(
         uint256 _minTokens,
         address _recipient
-    ) public payable;
+    ) external payable;
 }
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
