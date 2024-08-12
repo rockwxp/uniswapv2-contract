@@ -33,29 +33,61 @@ contract UniswapV2Pair is ERC20, Math {
         token1 = token1_;
     }
 
-    //    function getReserves() public view returns (uint112, uint112, uint32) {
-    //        return (reserve0, reserve1, 0);
-    //    }
+    function getReserves() public view returns (uint112, uint112, uint32) {
+        return (reserve0, reserve1, 0);
+    }
 
-    //   function mint() public {
-    //       uint256 balance0 = IERC20(token0).balanceOf(address(this));
-    //       uint256 balance1 = IERC20(token1).balanceOf(address(this));
-    //       uint256 amount0 = balance0 - reserve0;
-    //       uint256 amount1 = balance1 = reserve1;
-    //
-    //       uint256 liquidity;
-    //       if(totalSupply == 0){
-    //           liquidity = ???
-    //           _mint(addres(0),MINIMUM_LIQUIDITY );
-    //
-    //       }else{
-    //           liquidity = ???
-    //       }
-    //
-    //       if(liquidity <= 0) revert InsufficientLiquidityMinted();
-    //        _mint(msg.sender,liquidity);
-    //
-    //        _updata(balance0,balance1);
-    //         emit Mint(msg.sender, amount0, amount1);
-    //   }
+    function mint() public {
+        (uint112 _reserve0, uint112 _reserve1, ) = getReserves();
+        uint256 balance0 = IERC20(token0).balanceOf(address(this));
+        uint256 balance1 = IERC20(token1).balanceOf(address(this));
+
+        uint256 amount0 = balance0 - reserve0;
+        uint256 amount1 = balance1 - reserve1;
+
+        uint256 liquidity;
+
+        if (totalSupply == 0) {
+            liquidity = Math.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
+            _mint(address(0), MINIMUM_LIQUIDITY);
+        } else {
+            liquidity = Math.min(
+                (amount0 * totalSupply) / _reserve0,
+                (amount1 * totalSupply) / _reserve1
+            );
+        }
+
+        if (liquidity <= 0) revert InsufficientLiquidityMinted();
+
+        _mint(msg.sender, liquidity);
+        _update(balance0, balance1);
+
+        emit Mint(msg.sender, amount0, amount1);
+    }
+
+    function sync() public {
+        _update(
+            IERC20(token0).balanceOf(address(this)),
+            IERC20(token1).balanceOf(address(this))
+        );
+    }
+
+    function getReserves() public view returns (uint112, uint112, uint32) {
+        return (reserve0, reserve1, 0);
+    }
+
+    function _update(uint256 balance0, uint256 balance1) private {
+        reserve0 = uint112(balance0);
+        reserve1 = uint112(balance1);
+
+        emit Sync(reserve0, reserve1);
+    }
+
+    function _safeTransfer(address token, address to, uint256 value) private {
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSignature("transfer(address,uint256)", to, value)
+        );
+        if (!success || (data.length != 0 && !abi.decode(data, (bool))))
+            revert TransferFailed();
+    }
 }
