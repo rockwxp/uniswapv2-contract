@@ -33,12 +33,8 @@ contract UniswapV2Pair is ERC20, Math {
         token1 = token1_;
     }
 
-    function getReserves() public view returns (uint112, uint112, uint32) {
-        return (reserve0, reserve1, 0);
-    }
-
     function mint() public {
-        (uint112 _reserve0, uint112 _reserve1, ) = getReserves();
+        (uint256 _reserve0, uint256 _reserve1, ) = getReserves();
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
         uint256 balance1 = IERC20(token1).balanceOf(address(this));
 
@@ -72,13 +68,13 @@ contract UniswapV2Pair is ERC20, Math {
         );
     }
 
-    function getReserves() public view returns (uint112, uint112, uint32) {
+    function getReserves() public view returns (uint256, uint256, uint256) {
         return (reserve0, reserve1, 0);
     }
 
     function _update(uint256 balance0, uint256 balance1) private {
-        reserve0 = uint112(balance0);
-        reserve1 = uint112(balance1);
+        reserve0 = balance0;
+        reserve1 = balance1;
 
         emit Sync(reserve0, reserve1);
     }
